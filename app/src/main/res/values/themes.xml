@@ -1,9 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.SolenStadABDataBase" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <style name="Theme.SolenStadAB" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="buttonStyle">@style/CustomButton</item>
+        <item name="editTextStyle">@style/CustomEditText</item>
+        <item name="checkboxStyle">@style/CustomCheckBox</item>
     </style>
 
-    <style name="Theme.SolenStadABDataBase" parent="Base.Theme.SolenStadABDataBase" />
 </resources>
