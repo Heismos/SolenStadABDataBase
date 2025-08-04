@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/userbackgraund"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
@@ -17,22 +18,23 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="40dp"/>
+        android:layout_marginTop="100dp"/>
 
     <!-- Поле ввода -->
     <EditText
         android:id="@+id/editText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="199dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="200dp"
+        android:background="@drawable/edit_gradient_border"
+        android:gravity="center"
         android:hint="Введите текст"
+        android:textColorHint="#5e5d2d"
         android:padding="12dp"
-        android:background="@drawable/edit_background"
-        android:textColor="#000000"
-        app:layout_constraintTop_toBottomOf="@id/textHello"
-        app:layout_constraintStart_toStartOf="parent"
+        android:textColor="#EDE903"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="24dp"
-        android:layout_marginHorizontal="32dp"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Кнопка -->
     <Button
@@ -40,8 +42,9 @@
         android:layout_width="200dp"
         android:layout_height="60dp"
         android:text="Нажми меня"
-        android:background="@drawable/button_background"
-        android:textColor="#FFFFFF"
+        android:background="@drawable/button_selector"
+        android:textColor="#EDE903"
+        android:textSize="20dp"
         app:layout_constraintTop_toBottomOf="@id/editText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -54,7 +57,7 @@
         android:layout_height="wrap_content"
         android:text="Согласен"
         android:button="@drawable/custom_checkbox"
-        android:textColor="#000000"
+        android:textColor="#EDE903"
         app:layout_constraintTop_toBottomOf="@id/my_button"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
