@@ -1,11 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
+
     <!-- Нажатое состояние -->
-    <item android:state_pressed="true" android:drawable="@drawable/button_pressed" />
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFAB40" />
+            <corners android:radius="26dp" />
+        </shape>
+    </item>
 
-    <!-- Неактивное состояние (если нужно) -->
-    <item android:state_enabled="false" android:drawable="@drawable/button_disabled" />
+    <!-- Неактивное состояние -->
+    <item android:state_enabled="false">
+        <shape android:shape="rectangle">
+            <solid android:color="#303033" />
+            <corners android:radius="26dp" />
+        </shape>
+    </item>
 
-    <!-- Обычное состояние -->
-    <item android:drawable="@drawable/button_default" />
+    <!-- Обычное (по умолчанию) состояние -->
+    <item>
+        <shape android:shape="rectangle" >
+            <solid android:color="#030D42" />
+            <corners android:radius="35dp" />
+        </shape>
+    </item>
+
+
 </selector>
