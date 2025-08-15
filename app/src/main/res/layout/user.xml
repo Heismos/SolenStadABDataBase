@@ -44,7 +44,7 @@
         android:layout_width="wrap_content"
         android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/my_checkbox"
-        app:layout_constraintBottom_toTopOf="@id/my_button"
+        app:layout_constraintBottom_toTopOf="@id/space_bottom"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="12dp">
@@ -63,24 +63,20 @@
                 android:layout_gravity="center"
                 android:layout_width="300dp"
                 android:layout_height="wrap_content"/>
-            <Space
-                android:id="@+id/space_bottom"
-                android:layout_width="0dp"
-                android:layout_height="46dp"
-                app:layout_constraintTop_toBottomOf="@id/swipe_refresh"
-                app:layout_constraintBottom_toTopOf="@id/my_button"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
         </ScrollView>
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-    <Space
 
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- Пустое пространство между списком и кнопкой -->
+    <Space
+        android:id="@+id/space_bottom"
         android:layout_width="0dp"
-        android:layout_height="46dp"
+        android:layout_height="16dp"
         app:layout_constraintTop_toBottomOf="@id/swipe_refresh"
         app:layout_constraintBottom_toTopOf="@id/my_button"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
+
     <!-- Кнопка "Добавить пользователя" -->
     <Button
         android:id="@+id/my_button"
