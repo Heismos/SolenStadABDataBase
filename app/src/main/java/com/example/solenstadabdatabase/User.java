@@ -1,17 +1,21 @@
 package com.example.solenstadabdatabase;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import android.widget.*;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -32,9 +36,12 @@ public class User extends AppCompatActivity {
     private CheckBox rememberCheckBox;
     private EditText searchEdit;
     private SharedPreferences sharedPreferences;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     private JSONArray localUsers = new JSONArray();
     private JSONArray serverUsers = new JSONArray();
+
+    private ActivityResultLauncher<Intent> addUserLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,46 +52,56 @@ public class User extends AppCompatActivity {
         addUserButton = findViewById(R.id.my_button);
         rememberCheckBox = findViewById(R.id.my_checkbox);
         searchEdit = findViewById(R.id.editText);
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh);
 
-        // Добавляем отступ сверху у контейнера списка пользователей
-        int marginInDp = 10;
-        int marginInPx = (int) (marginInDp * getResources().getDisplayMetrics().density + 0.5f);
-        usersContainer.setPadding(
-                usersContainer.getPaddingLeft(),
-                marginInPx,
-                usersContainer.getPaddingRight(),
-                usersContainer.getPaddingBottom()
-        );
-
+        // SharedPreferences
         sharedPreferences = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
-
         boolean remember = sharedPreferences.getBoolean(KEY_REMEMBER, false);
         if (remember) {
             Toast.makeText(this, "Пользователь запомнен. Переход к списку проектов...", Toast.LENGTH_LONG).show();
-            // Здесь можно добавить переход на следующий экран
             return;
         }
 
+        // Сразу показываем локальные данные
+        loadUsersFromLocal();
+        showUsers(localUsers);
+
+        // Асинхронно подгружаем серверные данные
         loadUsersFromServer();
 
-        addUserButton.setOnClickListener(v ->
-                Toast.makeText(User.this, "Открытие формы добавления пользователя", Toast.LENGTH_SHORT).show()
-        );
+        // Настройка pull-to-refresh
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            loadUsersFromServer(); // при свайпе обновляем серверные данные
+            swipeRefreshLayout.setRefreshing(false);
+        });
+
+        // ActivityResultLauncher для обновления после добавления пользователя
+        addUserLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        loadUsersFromLocal();
+                        showUsers(localUsers);
+                    }
+                });
+
+        addUserButton.setOnClickListener(v -> {
+            Intent intent = new Intent(User.this, GreatUserActivity.class);
+            addUserLauncher.launch(intent);
+        });
 
         rememberCheckBox.setOnCheckedChangeListener((buttonView, isChecked) ->
-                sharedPreferences.edit().putBoolean(KEY_REMEMBER, isChecked).apply()
-        );
+                sharedPreferences.edit().putBoolean(KEY_REMEMBER, isChecked).apply());
 
-        // Фильтрация при вводе текста
+        // Фильтрация пользователей при вводе текста
         searchEdit.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filterUsers(s.toString());
-            }
-            @Override public void afterTextChanged(Editable s) { }
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { filterUsers(s.toString()); }
+            @Override public void afterTextChanged(Editable s) {}
         });
     }
 
+    // --- Загрузка пользователей с сервера ---
     private void loadUsersFromServer() {
         Request request = new Request.Builder()
                 .url(SERVER_URL)
@@ -95,11 +112,6 @@ public class User extends AppCompatActivity {
             @Override
             public void onFailure(Call call, IOException e) {
                 Log.e("User", "Ошибка соединения: " + e.getMessage());
-                runOnUiThread(() -> {
-                    Toast.makeText(User.this, "Сервер недоступен, загружаем локальные данные", Toast.LENGTH_LONG).show();
-                    loadUsersFromLocal();
-                    showUsers(localUsers);
-                });
             }
 
             @Override
@@ -108,23 +120,19 @@ public class User extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     try {
                         serverUsers = new JSONArray(bodyStr);
-                        saveToLocalFile(bodyStr);
-                        mergeUsers();
+                        mergeUsers(); // синхронизация локальных и серверных данных
                         runOnUiThread(() -> showUsers(localUsers));
-                    } catch (JSONException e) {
+                    } catch (Exception e) {
                         runOnUiThread(() -> Toast.makeText(User.this, "Ошибка парсинга JSON", Toast.LENGTH_SHORT).show());
                     }
                 } else {
-                    runOnUiThread(() -> {
-                        Toast.makeText(User.this, "Ошибка сервера: " + response.code(), Toast.LENGTH_SHORT).show();
-                        loadUsersFromLocal();
-                        showUsers(localUsers);
-                    });
+                    runOnUiThread(() -> Toast.makeText(User.this, "Ошибка сервера: " + response.code(), Toast.LENGTH_SHORT).show());
                 }
             }
         });
     }
 
+    // --- Загрузка локальных данных ---
     private void loadUsersFromLocal() {
         try {
             File file = new File(getFilesDir(), LOCAL_FILE);
@@ -138,11 +146,30 @@ public class User extends AppCompatActivity {
         }
     }
 
-    private void saveToLocalFile(String json) {
+    // --- Синхронизация локальных и серверных данных ---
+    private void mergeUsers() {
+        loadUsersFromLocal(); // сначала загружаем локальные
+        for (int i = 0; i < serverUsers.length(); i++) {
+            JSONObject serverUser = serverUsers.optJSONObject(i);
+            boolean exists = false;
+            for (int j = 0; j < localUsers.length(); j++) {
+                if (localUsers.optJSONObject(j).optString("userName")
+                        .equals(serverUser.optString("userName"))) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) localUsers.put(serverUser);
+        }
+        saveToLocalFile();
+    }
+
+    // --- Сохранение локальных данных ---
+    private void saveToLocalFile() {
         try {
             File file = new File(getFilesDir(), LOCAL_FILE);
             FileOutputStream fos = new FileOutputStream(file);
-            fos.write(json.getBytes(StandardCharsets.UTF_8));
+            fos.write(localUsers.toString().getBytes(StandardCharsets.UTF_8));
             fos.close();
         } catch (IOException e) {
             Log.e("User", "Ошибка сохранения локального файла: " + e.getMessage());
@@ -159,27 +186,10 @@ public class User extends AppCompatActivity {
         return buffer.toString(StandardCharsets.UTF_8.name());
     }
 
-    private void mergeUsers() {
-        loadUsersFromLocal();
-        for (int i = 0; i < serverUsers.length(); i++) {
-            JSONObject serverUser = serverUsers.optJSONObject(i);
-            boolean exists = false;
-            for (int j = 0; j < localUsers.length(); j++) {
-                if (localUsers.optJSONObject(j).optString("userName")
-                        .equals(serverUser.optString("userName"))) {
-                    exists = true;
-                    break;
-                }
-            }
-            if (!exists) localUsers.put(serverUser);
-        }
-        saveToLocalFile(localUsers.toString());
-    }
-
+    // --- Отображение пользователей ---
     private void showUsers(JSONArray users) {
         usersContainer.removeAllViews();
-
-        int marginInDp = 10; // отступ в dp
+        int marginInDp = 10;
         int marginInPx = (int) (marginInDp * getResources().getDisplayMetrics().density + 0.5f);
 
         for (int i = 0; i < users.length(); i++) {
@@ -191,20 +201,20 @@ public class User extends AppCompatActivity {
             btn.setTextColor(Color.parseColor("#c0b27b"));
 
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,  // ширина
+                    LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
             );
-            params.setMargins(0, marginInPx, 0, marginInPx); // сверху и снизу отступ
+            params.setMargins(0, marginInPx, 0, marginInPx);
             btn.setLayoutParams(params);
 
             btn.setOnClickListener(v ->
-                    Toast.makeText(this, "Выбран: " + name, Toast.LENGTH_SHORT).show()
-            );
+                    Toast.makeText(this, "Выбран: " + name, Toast.LENGTH_SHORT).show());
 
             usersContainer.addView(btn);
         }
     }
 
+    // --- Фильтрация пользователей ---
     private void filterUsers(String query) {
         JSONArray filtered = new JSONArray();
         for (int i = 0; i < localUsers.length(); i++) {

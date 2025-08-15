@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/userbackgraund">
+
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:fillViewport="true"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:id="@+id/cardContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+
+            android:padding="16dp"
+            android:elevation="8dp"
+            android:layout_marginTop="250dp">
+
+            <EditText
+                android:id="@+id/firstNameEdit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Имя"
+                android:background="@drawable/edit_gradient_border"
+                android:textColor="#c0b27b"
+                android:textColorHint="#625B40"
+                android:padding="12dp"/>
+
+            <EditText
+                android:id="@+id/userNameEdit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Логин (только буквы и цифры)"
+                android:background="@drawable/edit_gradient_border"
+                android:textColor="#c0b27b"
+                android:textColorHint="#625B40"
+                android:padding="12dp"
+                android:layout_marginTop="12dp"/>
+
+            <EditText
+                android:id="@+id/userPassEdit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Пароль (только буквы и цифры)"
+                android:inputType="textPassword"
+                android:background="@drawable/edit_gradient_border"
+                android:textColor="#c0b27b"
+                android:textColorHint="#625B40"
+                android:padding="12dp"
+                android:layout_marginTop="12dp"/>
+
+            <EditText
+                android:id="@+id/telEdit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Телефон (пример: +380501234567)"
+                android:inputType="phone"
+                android:background="@drawable/edit_gradient_border"
+                android:textColor="#c0b27b"
+                android:textColorHint="#625B40"
+                android:padding="12dp"
+                android:layout_marginTop="12dp"/>
+
+            <EditText
+                android:id="@+id/userMailEdit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Email (пример: example@mail.com)"
+                android:inputType="textEmailAddress"
+                android:background="@drawable/edit_gradient_border"
+                android:textColor="#c0b27b"
+                android:textColorHint="#625B40"
+                android:padding="12dp"
+                android:layout_marginTop="12dp"/>
+
+            <Button
+                android:id="@+id/addUserButton"
+                android:layout_width="match_parent"
+                android:layout_height="47dp"
+                android:text="Добавить пользователя"
+                android:background="@drawable/button_selector"
+                android:textColor="#c0b27b"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"/>
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
