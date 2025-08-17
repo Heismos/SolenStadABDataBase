@@ -1,28 +1,45 @@
 package com.example.solenstadabdatabase;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputFilter;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ScrollView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import okhttp3.*;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class GreatUserActivity extends AppCompatActivity {
 
-    private static final String SERVER_URL = "http://heiserver.ddns.net/D/server/Heis_nexus/SolenStadAB/data/user.json";
+    private static final String SERVER_URL =
+            "http://heiserver.ddns.net/D/server/Heis_nexus/SolenStadAB/data/user.json";
     private static final String TOKEN = "HEISAdmin";
     private static final String LOCAL_FILE = "user.json";
 
@@ -46,7 +63,7 @@ public class GreatUserActivity extends AppCompatActivity {
         userMailEdit = findViewById(R.id.userMailEdit);
         addButton = findViewById(R.id.addUserButton);
 
-        // Ограничения для полей
+        // Ограничения
         userNameEdit.setFilters(new InputFilter[]{new InputFilter.LengthFilter(20)});
         userPassEdit.setFilters(new InputFilter[]{new InputFilter.LengthFilter(20)});
         telEdit.setFilters(new InputFilter[]{new InputFilter.LengthFilter(15)});
@@ -54,6 +71,24 @@ public class GreatUserActivity extends AppCompatActivity {
         loadLocalUsers();
 
         addButton.setOnClickListener(v -> addUser());
+
+        // Автоподъём формы при клавиатуре
+        var cardContainer = findViewById(R.id.cardContainer);
+        final int initialTopPad = cardContainer.getPaddingTop();
+
+        ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, insets) -> {
+            boolean imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime());
+            int top = imeVisible ? 0 : initialTopPad;
+            if (cardContainer.getPaddingTop() != top) {
+                cardContainer.setPadding(
+                        cardContainer.getPaddingLeft(),
+                        top,
+                        cardContainer.getPaddingRight(),
+                        cardContainer.getPaddingBottom()
+                );
+            }
+            return insets;
+        });
     }
 
     private void addUser() {
@@ -88,16 +123,16 @@ public class GreatUserActivity extends AppCompatActivity {
             newUser.put("tel", tel);
             newUser.put("userMail", userMail);
 
-            // Сохраняем локально
+            // локально
             localUsers.put(newUser);
             saveToLocalFile();
 
-            // Асинхронная синхронизация с сервером
+            // на сервер
             syncWithServer(newUser);
 
             Toast.makeText(this, "Пользователь добавлен", Toast.LENGTH_SHORT).show();
 
-            // Очистка полей
+            // Очистка
             firstNameEdit.setText("");
             userNameEdit.setText("");
             userPassEdit.setText("");

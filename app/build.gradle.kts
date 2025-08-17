@@ -33,7 +33,8 @@ android {
 
 dependencies {
     dependencies {
-        implementation ("androidx.constraintlayout:constraintlayout:2.1.4")
+
+        implementation("androidx.constraintlayout:constraintlayout:2.1.4")
         implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
         implementation("androidx.security:security-crypto:1.1.0-alpha06")
         implementation("com.squareup.okhttp3:okhttp:4.12.0")
