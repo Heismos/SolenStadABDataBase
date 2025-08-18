@@ -1,51 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/userbackgraund">
 
-    <!-- Поле поиска пользователя -->
-    <EditText
-        android:id="@+id/editText"
-        android:layout_width="300dp"
+    <!-- Блок с поиском и чекбоксом -->
+    <LinearLayout
+        android:id="@+id/top_block"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="Найти пользователя"
-        android:background="@drawable/edit_gradient_border"
-        android:gravity="center"
-        android:textColor="#c0b27b"
-        android:textColorHint="#625B40"
-        android:textStyle="bold"
-        android:padding="12dp"
-        android:inputType="text"
-        android:imeOptions="actionDone"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="310dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"/>
+        android:layout_marginTop="310dp">
 
-    <!-- Чекбокс "Запомнить меня" -->
-    <CheckBox
-        android:id="@+id/my_checkbox"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Запомнить меня"
-        android:button="@drawable/custom_checkbox"
-        android:textColor="#020426"
-        android:textSize="20sp"
-        app:layout_constraintTop_toBottomOf="@id/editText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp"/>
+        <!-- Поле поиска -->
+        <EditText
+            android:id="@+id/editText"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:hint="Найти пользователя"
+            android:background="@drawable/edit_gradient_border"
+            android:gravity="center"
+            android:textColor="#c0b27b"
+            android:textColorHint="#625B40"
+            android:textStyle="bold"
+            android:padding="12dp"
+            android:inputType="text"
+            android:imeOptions="actionDone"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"/>
 
-    <!-- SwipeRefreshLayout с ScrollView для списка пользователей -->
+        <!-- Чекбокс "Запомнить меня" -->
+        <CheckBox
+            android:id="@+id/my_checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Запомнить меня"
+            android:button="@drawable/custom_checkbox"
+            android:textColor="#020426"
+            android:textSize="20sp"
+            android:layout_marginTop="8dp"/>
+    </LinearLayout>
+
+    <!-- SwipeRefreshLayout со списком пользователей -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/my_checkbox"
+        app:layout_constraintTop_toBottomOf="@id/top_block"
         app:layout_constraintBottom_toTopOf="@id/my_button"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -57,8 +65,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
-            android:clipToPadding="false"
-            android:padding="0dp">
+            android:clipToPadding="false">
 
             <LinearLayout
                 android:id="@+id/users_container"
@@ -69,7 +76,6 @@
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"/>
         </ScrollView>
-
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <!-- Кнопка "Добавить пользователя" -->

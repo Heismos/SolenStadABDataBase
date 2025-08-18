@@ -4,15 +4,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import android.widget.*;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import org.json.JSONArray;
@@ -48,6 +49,28 @@ public class User extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.user);
 
+        ConstraintLayout mainLayout = findViewById(R.id.main);
+        LinearLayout topBlock = findViewById(R.id.top_block); // блок с EditText + CheckBox
+
+        // --- Подъем блока при появлении клавиатуры: меняем topMargin с 310dp на 30dp ---
+        mainLayout.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            Rect r = new Rect();
+            mainLayout.getWindowVisibleDisplayFrame(r);
+            int screenHeight = mainLayout.getRootView().getHeight();
+            int keypadHeight = screenHeight - r.bottom;
+
+            boolean keyboardVisible = keypadHeight > screenHeight * 0.15f;
+
+            ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) topBlock.getLayoutParams();
+            int targetMargin = dp(keyboardVisible ? 30 : 310);
+            if (lp.topMargin != targetMargin) {
+                lp.topMargin = targetMargin;
+                topBlock.setLayoutParams(lp);
+                mainLayout.requestLayout();
+            }
+        });
+        // -------------------------------------------------------------------------------
+
         usersContainer = findViewById(R.id.users_container);
         addUserButton = findViewById(R.id.my_button);
         rememberCheckBox = findViewById(R.id.my_checkbox);
@@ -62,20 +85,15 @@ public class User extends AppCompatActivity {
             return;
         }
 
-        // Сразу показываем локальные данные
         loadUsersFromLocal();
         showUsers(localUsers);
-
-        // Асинхронно подгружаем серверные данные
         loadUsersFromServer();
 
-        // Настройка pull-to-refresh
         swipeRefreshLayout.setOnRefreshListener(() -> {
-            loadUsersFromServer(); // при свайпе обновляем серверные данные
+            loadUsersFromServer();
             swipeRefreshLayout.setRefreshing(false);
         });
 
-        // ActivityResultLauncher для обновления после добавления пользователя
         addUserLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -93,7 +111,6 @@ public class User extends AppCompatActivity {
         rememberCheckBox.setOnCheckedChangeListener((buttonView, isChecked) ->
                 sharedPreferences.edit().putBoolean(KEY_REMEMBER, isChecked).apply());
 
-        // Фильтрация пользователей при вводе текста
         searchEdit.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { filterUsers(s.toString()); }
@@ -101,7 +118,12 @@ public class User extends AppCompatActivity {
         });
     }
 
-    // --- Загрузка пользователей с сервера ---
+    // dp -> px
+    private int dp(int value) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(value * density);
+    }
+
     private void loadUsersFromServer() {
         Request request = new Request.Builder()
                 .url(SERVER_URL)
@@ -110,17 +132,14 @@ public class User extends AppCompatActivity {
 
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(Call call, IOException e) {
-                Log.e("User", "Ошибка соединения: " + e.getMessage());
-            }
-
+            public void onFailure(Call call, IOException e) { Log.e("User", "Ошибка соединения: " + e.getMessage()); }
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String bodyStr = response.body() != null ? response.body().string() : "";
                 if (response.isSuccessful()) {
                     try {
                         serverUsers = new JSONArray(bodyStr);
-                        mergeUsers(); // синхронизация локальных и серверных данных
+                        mergeUsers();
                         runOnUiThread(() -> showUsers(localUsers));
                     } catch (Exception e) {
                         runOnUiThread(() -> Toast.makeText(User.this, "Ошибка парсинга JSON", Toast.LENGTH_SHORT).show());
@@ -132,7 +151,6 @@ public class User extends AppCompatActivity {
         });
     }
 
-    // --- Загрузка локальных данных ---
     private void loadUsersFromLocal() {
         try {
             File file = new File(getFilesDir(), LOCAL_FILE);
@@ -141,22 +159,18 @@ public class User extends AppCompatActivity {
             String json = readFile(fis);
             fis.close();
             localUsers = new JSONArray(json);
-        } catch (Exception e) {
-            Log.e("User", "Ошибка чтения локального файла: " + e.getMessage());
-        }
+        } catch (Exception e) { Log.e("User", "Ошибка чтения локального файла: " + e.getMessage()); }
     }
 
-    // --- Синхронизация локальных и серверных данных ---
     private void mergeUsers() {
-        loadUsersFromLocal(); // сначала загружаем локальные
+        loadUsersFromLocal();
         for (int i = 0; i < serverUsers.length(); i++) {
             JSONObject serverUser = serverUsers.optJSONObject(i);
             boolean exists = false;
             for (int j = 0; j < localUsers.length(); j++) {
                 if (localUsers.optJSONObject(j).optString("userName")
                         .equals(serverUser.optString("userName"))) {
-                    exists = true;
-                    break;
+                    exists = true; break;
                 }
             }
             if (!exists) localUsers.put(serverUser);
@@ -164,29 +178,22 @@ public class User extends AppCompatActivity {
         saveToLocalFile();
     }
 
-    // --- Сохранение локальных данных ---
     private void saveToLocalFile() {
         try {
             File file = new File(getFilesDir(), LOCAL_FILE);
             FileOutputStream fos = new FileOutputStream(file);
             fos.write(localUsers.toString().getBytes(StandardCharsets.UTF_8));
             fos.close();
-        } catch (IOException e) {
-            Log.e("User", "Ошибка сохранения локального файла: " + e.getMessage());
-        }
+        } catch (IOException e) { Log.e("User", "Ошибка сохранения локального файла: " + e.getMessage()); }
     }
 
     private String readFile(InputStream is) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        byte[] data = new byte[1024];
-        int nRead;
-        while ((nRead = is.read(data, 0, data.length)) != -1) {
-            buffer.write(data, 0, nRead);
-        }
+        byte[] data = new byte[1024]; int nRead;
+        while ((nRead = is.read(data, 0, data.length)) != -1) buffer.write(data, 0, nRead);
         return buffer.toString(StandardCharsets.UTF_8.name());
     }
 
-    // --- Отображение пользователей ---
     private void showUsers(JSONArray users) {
         usersContainer.removeAllViews();
         int marginInDp = 10;
@@ -194,7 +201,6 @@ public class User extends AppCompatActivity {
 
         for (int i = 0; i < users.length(); i++) {
             String name = users.optJSONObject(i).optString("userName", "Без имени");
-
             Button btn = new Button(this);
             btn.setText(name);
             btn.setBackgroundResource(R.drawable.button_selector);
@@ -214,7 +220,6 @@ public class User extends AppCompatActivity {
         }
     }
 
-    // --- Фильтрация пользователей ---
     private void filterUsers(String query) {
         JSONArray filtered = new JSONArray();
         for (int i = 0; i < localUsers.length(); i++) {
