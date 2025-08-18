@@ -3,16 +3,16 @@ package com.example.solenstadabdatabase;
 import android.os.Bundle;
 import android.text.InputFilter;
 import android.text.TextUtils;
+import android.util.TypedValue;
 import android.util.Log;
-import android.util.Patterns;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -21,7 +21,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -35,6 +34,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import java.io.IOException;
 
 public class GreatUserActivity extends AppCompatActivity {
 
@@ -46,6 +46,7 @@ public class GreatUserActivity extends AppCompatActivity {
     private EditText firstNameEdit, userNameEdit, userPassEdit, telEdit, userMailEdit;
     private Button addButton;
     private ScrollView scrollView;
+    private LinearLayout cardContainer;
 
     private OkHttpClient httpClient = new OkHttpClient();
     private JSONArray localUsers = new JSONArray();
@@ -55,7 +56,9 @@ public class GreatUserActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_great_user);
 
+        // Инициализация элементов
         scrollView = findViewById(R.id.scrollView);
+        cardContainer = findViewById(R.id.cardContainer);
         firstNameEdit = findViewById(R.id.firstNameEdit);
         userNameEdit = findViewById(R.id.userNameEdit);
         userPassEdit = findViewById(R.id.userPassEdit);
@@ -63,31 +66,88 @@ public class GreatUserActivity extends AppCompatActivity {
         userMailEdit = findViewById(R.id.userMailEdit);
         addButton = findViewById(R.id.addUserButton);
 
-        // Ограничения
+        // Ограничение длины
         userNameEdit.setFilters(new InputFilter[]{new InputFilter.LengthFilter(20)});
         userPassEdit.setFilters(new InputFilter[]{new InputFilter.LengthFilter(20)});
         telEdit.setFilters(new InputFilter[]{new InputFilter.LengthFilter(15)});
 
+        // Загрузка локальных пользователей
         loadLocalUsers();
 
+        // Кнопка "Добавить пользователя"
         addButton.setOnClickListener(v -> addUser());
 
-        // Автоподъём формы при клавиатуре
-        var cardContainer = findViewById(R.id.cardContainer);
-        final int initialTopPad = cardContainer.getPaddingTop();
+        // Верхний отступ 30dp при появлении клавиатуры
+        final int topPaddingPx = (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 30, getResources().getDisplayMetrics());
 
-        ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, insets) -> {
-            boolean imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime());
-            int top = imeVisible ? 0 : initialTopPad;
-            if (cardContainer.getPaddingTop() != top) {
-                cardContainer.setPadding(
-                        cardContainer.getPaddingLeft(),
-                        top,
-                        cardContainer.getPaddingRight(),
-                        cardContainer.getPaddingBottom()
-                );
+        scrollView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            int[] location = new int[2];
+            firstNameEdit.getLocationOnScreen(location);
+            int fieldBottom = location[1] + firstNameEdit.getHeight();
+
+            int scrollViewHeight = scrollView.getHeight();
+            int screenHeight = scrollView.getRootView().getHeight();
+            int keyboardHeight = screenHeight - scrollViewHeight;
+
+            if (keyboardHeight > screenHeight * 0.15) { // клавиатура видна
+                scrollView.smoothScrollTo(0, fieldBottom - topPaddingPx);
             }
-            return insets;
+        });
+
+        // Настройка перехода по Enter между полями
+        setupFieldNavigation();
+    }
+
+    private void setupFieldNavigation() {
+        firstNameEdit.setSingleLine(true);
+        firstNameEdit.setImeOptions(EditorInfo.IME_ACTION_NEXT);
+        firstNameEdit.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                userNameEdit.requestFocus();
+                return true;
+            }
+            return false;
+        });
+
+        userNameEdit.setSingleLine(true);
+        userNameEdit.setImeOptions(EditorInfo.IME_ACTION_NEXT);
+        userNameEdit.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                userPassEdit.requestFocus();
+                return true;
+            }
+            return false;
+        });
+
+        userPassEdit.setSingleLine(true);
+        userPassEdit.setImeOptions(EditorInfo.IME_ACTION_NEXT);
+        userPassEdit.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                telEdit.requestFocus();
+                return true;
+            }
+            return false;
+        });
+
+        telEdit.setSingleLine(true);
+        telEdit.setImeOptions(EditorInfo.IME_ACTION_NEXT);
+        telEdit.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                userMailEdit.requestFocus();
+                return true;
+            }
+            return false;
+        });
+
+        userMailEdit.setSingleLine(true);
+        userMailEdit.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        userMailEdit.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                addUser();
+                return true;
+            }
+            return false;
         });
     }
 
@@ -104,7 +164,7 @@ public class GreatUserActivity extends AppCompatActivity {
             return;
         }
 
-        if (!Patterns.EMAIL_ADDRESS.matcher(userMail).matches()) {
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(userMail).matches()) {
             Toast.makeText(this, "Неверный email", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -123,16 +183,12 @@ public class GreatUserActivity extends AppCompatActivity {
             newUser.put("tel", tel);
             newUser.put("userMail", userMail);
 
-            // локально
             localUsers.put(newUser);
             saveToLocalFile();
-
-            // на сервер
             syncWithServer(newUser);
 
             Toast.makeText(this, "Пользователь добавлен", Toast.LENGTH_SHORT).show();
 
-            // Очистка
             firstNameEdit.setText("");
             userNameEdit.setText("");
             userPassEdit.setText("");
@@ -141,9 +197,8 @@ public class GreatUserActivity extends AppCompatActivity {
 
             setResult(RESULT_OK);
             finish();
-
         } catch (Exception e) {
-            Log.e("GreatUser", "Ошибка создания пользователя: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -156,7 +211,7 @@ public class GreatUserActivity extends AppCompatActivity {
             fis.close();
             localUsers = new JSONArray(json);
         } catch (Exception e) {
-            Log.e("GreatUser", "Ошибка чтения локального файла: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -166,8 +221,8 @@ public class GreatUserActivity extends AppCompatActivity {
             FileOutputStream fos = new FileOutputStream(file);
             fos.write(localUsers.toString().getBytes(StandardCharsets.UTF_8));
             fos.close();
-        } catch (IOException e) {
-            Log.e("GreatUser", "Ошибка сохранения локального файла: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -175,7 +230,7 @@ public class GreatUserActivity extends AppCompatActivity {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         byte[] data = new byte[1024];
         int nRead;
-        while ((nRead = is.read(data, 0, data.length)) != -1) {
+        while ((nRead = is.read(data)) != -1) {
             buffer.write(data, 0, nRead);
         }
         return buffer.toString(StandardCharsets.UTF_8.name());
@@ -192,11 +247,11 @@ public class GreatUserActivity extends AppCompatActivity {
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Log.e("GreatUser", "Ошибка отправки на сервер: " + e.getMessage());
+                e.printStackTrace();
             }
 
             @Override
-            public void onResponse(Call call, Response response) {
+            public void onResponse(Call call, Response response) throws IOException {
                 Log.i("GreatUser", "Сервер ответил: " + response.code());
             }
         });
