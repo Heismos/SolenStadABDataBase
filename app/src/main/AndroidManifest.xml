@@ -16,12 +16,13 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".ProjectActivity"
+            android:exported="false" />
+        <activity
             android:name=".SecurityActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize|stateHidden"
-            android:screenOrientation="portrait"/>
-
-        <!-- Экран добавления пользователя -->
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize|stateHidden" /> <!-- Экран добавления пользователя -->
         <activity
             android:name=".GreatUserActivity"
             android:exported="false"
@@ -33,7 +34,6 @@
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize|stateHidden">
             <intent-filter>
-
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />

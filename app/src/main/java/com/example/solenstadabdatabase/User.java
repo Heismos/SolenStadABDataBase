@@ -63,7 +63,11 @@ public class User extends AppCompatActivity {
         boolean remember = sharedPreferences.getBoolean(KEY_REMEMBER, false);
         if (remember) {
             String name = sharedPreferences.getString(KEY_REMEMBER_NAME, "Неизвестный");
-            Toast.makeText(this, "Пользователь запомнен: " + name, Toast.LENGTH_LONG).show();
+
+            // Переход на ProjectActivity
+            Intent intent = new Intent(User.this, ProjectActivity.class);
+            startActivity(intent);
+            finish(); // закрываем SecurityActivity
         }
 
         // --- Подъем блока при появлении клавиатуры ---

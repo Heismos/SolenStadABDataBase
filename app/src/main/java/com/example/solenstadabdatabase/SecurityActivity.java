@@ -1,8 +1,8 @@
 package com.example.solenstadabdatabase;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.widget.*;
@@ -66,17 +66,18 @@ public class SecurityActivity extends AppCompatActivity {
 
             String inputPass = passwordEdit.getText().toString();
             if (checkPassword(userName, inputPass)) {
-                Toast.makeText(this, rememberChecked ?
-                                "Переход без проверки пароля. Пользователь: " + userName :
-                                "Переход на активити проектов. Пользователь: " + userName,
-                        Toast.LENGTH_LONG).show();
-
+                // Сохраняем состояние "запомнить пользователя", если нужно
                 if (rememberChecked) {
-                    prefs.edit().putString("remember_name", userName).putBoolean("remember_user", true).apply();
+                    prefs.edit().putString("remember_name", userName)
+                            .putBoolean("remember_user", true).apply();
                 }
 
                 // Сброс попыток
                 prefs.edit().putInt(KEY_ATTEMPTS + userName, 0).apply();
+
+                // Переход на ProjectActivity
+                Intent intent = new Intent(SecurityActivity.this, ProjectActivity.class);
+                startActivity(intent);
                 finish(); // закрываем SecurityActivity
             } else {
                 attempts++;
@@ -84,10 +85,12 @@ public class SecurityActivity extends AppCompatActivity {
                     lockTime = System.currentTimeMillis() + LOCK_DURATION;
                     prefs.edit().putLong(KEY_LOCK_TIME + userName, lockTime).apply();
                     infoText.setText("Максимум попыток достигнут. Заблокировано на 10 секунд.");
+                    enterButton.setEnabled(false);
                     new Handler().postDelayed(() -> {
                         attempts = 0;
                         prefs.edit().putInt(KEY_ATTEMPTS + userName, attempts).apply();
                         infoText.setText("");
+                        enterButton.setEnabled(true);
                     }, LOCK_DURATION);
                 } else {
                     infoText.setText("Неправильный пароль. Осталось попыток: " + (MAX_ATTEMPTS - attempts));
