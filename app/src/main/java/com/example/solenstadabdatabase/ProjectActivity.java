@@ -1,20 +1,17 @@
 package com.example.solenstadabdatabase;
 
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
 import android.widget.*;
-import androidx.appcompat.app.ActionBarDrawerToggle;
+import android.view.View;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 
 public class ProjectActivity extends AppCompatActivity {
@@ -32,7 +29,14 @@ public class ProjectActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_project);
+        // Полный экран, скрываем статус-бар
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_FULLSCREEN |
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        );
 
+        setContentView(R.layout.activity_project);
         projectsContainer = findViewById(R.id.projects_container);
         sortSpinner = findViewById(R.id.spinner_sort);
 
@@ -43,31 +47,26 @@ public class ProjectActivity extends AppCompatActivity {
                 android.R.layout.simple_list_item_1, drawerItems));
 
         drawerList.setOnItemClickListener((parent, view, position, id) -> {
-            switch (position) {
-                case 0:
-                    createMaterialsJson();
-                    break;
-                case 1:
-                    createProjectsJson();
-                    break;
-            }
+            if (position == 0) createMaterialsJson();
+            else if (position == 1) createProjectsJson();
             drawerLayout.closeDrawers();
         });
 
+        // Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
-                R.string.drawer_open, R.string.drawer_close);
-        drawerLayout.addDrawerListener(drawerToggle);
-        drawerToggle.syncState();
 
-        // Настройка сортировки
+        // Кнопка для открытия Drawer
+        ImageButton btnDrawer = findViewById(R.id.btn_drawer);
+        btnDrawer.setOnClickListener(v -> drawerLayout.openDrawer(drawerList));
+
+        // Сортировка
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item,
                 new String[]{"По дате", "По имени", "По времени"});
         sortSpinner.setAdapter(adapter);
 
-        // Загружаем и показываем проекты
+        // Загружаем проекты
         loadProjects();
         showProjects();
     }
@@ -93,6 +92,7 @@ public class ProjectActivity extends AppCompatActivity {
 
     private void showProjects() {
         projectsContainer.removeAllViews();
+
         for (int i = 0; i < projects.length(); i++) {
             JSONObject proj = projects.optJSONObject(i);
             if (proj == null) continue;
@@ -103,7 +103,7 @@ public class ProjectActivity extends AppCompatActivity {
 
             LinearLayout card = new LinearLayout(this);
             card.setOrientation(LinearLayout.VERTICAL);
-            card.setPadding(20, 20, 20, 20);
+            card.setPadding(20,20,20,20);
             card.setBackgroundResource(R.drawable.edit_gradient_border);
 
             TextView tv = new TextView(this);
@@ -114,24 +114,33 @@ public class ProjectActivity extends AppCompatActivity {
 
             LinearLayout btns = new LinearLayout(this);
             btns.setOrientation(LinearLayout.HORIZONTAL);
+            btns.setPadding(0,10,0,0);
 
+            // Добавить материал
             Button addMatBtn = new Button(this);
             addMatBtn.setText("Добавить материал");
+            addMatBtn.setBackgroundResource(R.drawable.button_selector);
+            addMatBtn.setTextColor(0xFFC0B27B);
+            addMatBtn.setPadding(12,12,12,12);
             addMatBtn.setOnClickListener(v ->
                     Toast.makeText(this, "Добавление материала пока не реализовано", Toast.LENGTH_SHORT).show());
             btns.addView(addMatBtn);
 
+            // Удалить проект
+            final int index = i;
             Button delBtn = new Button(this);
             delBtn.setText("Удалить проект");
+            delBtn.setBackgroundResource(R.drawable.button_selector);
+            delBtn.setTextColor(0xFFC0B27B);
+            delBtn.setPadding(12,12,12,12);
             delBtn.setOnClickListener(v -> {
-                projects.remove(i);
+                projects.remove(index);
                 saveJSON("projects.json", projects);
                 showProjects();
             });
             btns.addView(delBtn);
 
             card.addView(btns);
-
             projectsContainer.addView(card);
         }
     }
@@ -151,18 +160,15 @@ public class ProjectActivity extends AppCompatActivity {
     private void createMaterialsJson() {
         try {
             JSONArray materials = new JSONArray();
-            materials.put(new JSONObject().put("name", "Розетки").put("unit", "шт"));
-            materials.put(new JSONObject().put("name", "Провод").put("unit", "м"));
-            materials.put(new JSONObject().put("name", "Кабель").put("unit", "м"));
-            materials.put(new JSONObject().put("name", "Автомат").put("unit", "шт"));
-            materials.put(new JSONObject().put("name", "Светильник").put("unit", "шт"));
-            materials.put(new JSONObject().put("name", "Щит").put("unit", "шт"));
-
+            materials.put(new JSONObject().put("name","Розетки").put("unit","шт"));
+            materials.put(new JSONObject().put("name","Провод").put("unit","м"));
+            materials.put(new JSONObject().put("name","Кабель").put("unit","м"));
+            materials.put(new JSONObject().put("name","Автомат").put("unit","шт"));
+            materials.put(new JSONObject().put("name","Светильник").put("unit","шт"));
+            materials.put(new JSONObject().put("name","Щит").put("unit","шт"));
             saveJSON("materials.json", materials);
             Toast.makeText(this, "materials.json создан", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     private void createProjectsJson() {
@@ -170,29 +176,25 @@ public class ProjectActivity extends AppCompatActivity {
             JSONArray projectsArray = new JSONArray();
 
             JSONObject p1 = new JSONObject();
-            p1.put("projectName", "Стафансторп");
-            p1.put("date", "12.09.2025");
-            p1.put("comment", "Штробили стены, делали подразетники");
+            p1.put("projectName","Стафансторп");
+            p1.put("date","12.09.2025");
+            p1.put("comment","Штробили стены, делали подразетники");
             p1.put("users", new JSONArray("[{\"name\":\"Oleksii\",\"start\":\"07:00\",\"end\":\"13:00\",\"hours\":6},{\"name\":\"Mikolay\",\"start\":\"07:00\",\"end\":\"14:00\",\"hours\":7}]"));
             p1.put("materials", new JSONArray("[{\"name\":\"Розетки\",\"quantity\":26,\"unit\":\"шт\"},{\"name\":\"Провод\",\"quantity\":12,\"unit\":\"м\"}]"));
             projectsArray.put(p1);
 
             JSONObject p2 = new JSONObject();
-            p2.put("projectName", "Лунд");
-            p2.put("date", "13.09.2025");
-            p2.put("comment", "Протяжка кабеля");
+            p2.put("projectName","Лунд");
+            p2.put("date","13.09.2025");
+            p2.put("comment","Протяжка кабеля");
             p2.put("users", new JSONArray("[{\"name\":\"Oleksii\",\"start\":\"07:00\",\"end\":\"09:30\",\"hours\":2.5}]"));
             p2.put("materials", new JSONArray("[{\"name\":\"Кабель\",\"quantity\":50,\"unit\":\"м\"}]"));
             projectsArray.put(p2);
-
-            // Добавь остальные проекты по аналогии...
 
             saveJSON("projects.json", projectsArray);
             loadProjects();
             showProjects();
             Toast.makeText(this, "projects.json создан", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 }

@@ -17,7 +17,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="310dp">
+        android:layout_marginTop="250dp">
 
         <!-- Поле поиска -->
         <EditText
@@ -46,6 +46,17 @@
             android:textColor="#020426"
             android:textSize="20sp"
             android:layout_marginTop="8dp"/>
+
+        <!-- Статус загрузки -->
+        <TextView
+            android:id="@+id/status_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Статус: неизвестно"
+            android:textColor="#c0b27b"
+            android:textSize="16sp"
+            android:layout_marginTop="6dp"
+            android:gravity="center"/>
     </LinearLayout>
 
     <!-- SwipeRefreshLayout со списком пользователей -->
